@@ -1,4 +1,3 @@
-
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -8,6 +7,10 @@ from pydantic import Field
 class Settings(BaseSettings):
     # Pydantic leerá MONGO_URI de las env vars
     mongo_uri: str = Field(..., env="MONGO_URI")
+
+    # Request 
+    url_api_sga_estudiante: str = Field(..., alias="SERVIDOR_API_ESTUDIANTE_URL")
+    url_api_sga_preRegistro: str = Field(..., alias="SERVIDOR_API_PRE_REGISTRO_URL")
 
     class Config:
         env_file = ".env"

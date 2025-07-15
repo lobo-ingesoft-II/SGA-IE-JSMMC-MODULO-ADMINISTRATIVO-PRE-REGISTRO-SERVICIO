@@ -10,6 +10,7 @@ motor
 prometheus_client
 pytest
 pytest-mock
+requests==2.31.0
 
 
 
