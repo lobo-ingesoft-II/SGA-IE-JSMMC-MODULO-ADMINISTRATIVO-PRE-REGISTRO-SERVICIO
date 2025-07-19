@@ -12,6 +12,7 @@ from prometheus_client import CollectorRegistry, generate_latest
 
 # imporar las consultas 
 from app.services.queryMongo import get_logs_preRegsitro
+from app.services.requests_preRegistro import getPrematriculas, deletePrematricula
 
 router = APIRouter() 
 
@@ -47,7 +48,39 @@ def custom_metrics():
 
 
 # Ruta para obtener todos los logs 
-@router.get("/log_preRegistro", response_model=dict)
+@router.get("/log_pre_registros", response_model=dict)
 def logs_preRegsitro():
-    docuemnts = get_logs_preRegsitro()
-    return {"coleccion": docuemnts}
+    documents = get_logs_preRegsitro()
+    return {"coleccion": documents}
+
+
+# Ruta para mostrar todos los preRegistro en el momento 
+@router.get("/pre_registros", response_model=dict)
+def get_pre_registros():
+    response = getPrematriculas()
+    if response is not None:
+        return response
+    else:
+        raise HTTPException(status_code=500, detail="Error al obtener pre-registros")
+
+# Ruta para el rechazo de solicitud de prematricula de un estudiante 
+@router.post("/prematricula/rechazar/{id}", response_model=dict)
+def rechazar_prematricula(id:str):
+    response = deletePrematricula(id)
+    if response is not None:
+        return response
+    else:
+        raise HTTPException(status_code=500, detail=f"Error al borrar pre-registro con id: {id} ")
+    
+
+# Ruta para la aceptacion de solicitud de prematricula de un estudiante 
+@router.post("/prematricula/aceptar/{id}/{id_sede}/{id_curso}", response_model=dict)
+def aceptar_prematricula(id:str, id_sede:int, id_curso:int):
+
+    
+    response = deletePrematricula(id)
+    if response is not None:
+        return response
+    else:
+        raise HTTPException(status_code=500, detail=f"Error al borrar pre-registro con id: {id} ")
+    

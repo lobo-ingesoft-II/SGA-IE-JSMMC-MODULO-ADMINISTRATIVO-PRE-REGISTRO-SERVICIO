@@ -13,7 +13,9 @@ from starlette.responses import Response
 app = FastAPI()
 
 # Importar las rutas
-app.include_router(modulo_administrativo.router)
+#Registrar rutas de estudiantes
+
+app.include_router(modulo_administrativo.router,  prefix="/adm_pre_registro", tags=["administracion_preRegsitro"])
 
 # Configuración de CORS
 app.add_middleware(

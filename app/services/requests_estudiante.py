@@ -37,6 +37,8 @@ def CrearEstudiante(estudiante_data:dict):
         return None
 
 
+
+
 # # Registrar rutas
 # app.include_router(estudiantes.router, prefix="/estudiantes", tags=["Estudiantes"])
 # 
