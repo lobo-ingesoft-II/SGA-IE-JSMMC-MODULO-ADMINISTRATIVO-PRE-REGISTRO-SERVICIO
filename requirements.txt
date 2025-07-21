@@ -1,0 +1,16 @@
+fastapi 
+redis-om
+uvicorn[standard]
+# "fastapi[standard]"
+requests 
+pymongo
+pydantic-settings 
+python-dotenv
+motor
+prometheus_client
+pytest
+pytest-mock
+requests==2.31.0
+
+
+
