@@ -22,5 +22,27 @@ def get_logs_preRegsitro():
 
     return documents
 
-  
- 
+def add_log_preRegistro(log_data: log_preRegistro):
+    # Obtener la colección de logs
+    logs_collection = db["logs_prematricula"]
+
+    # Insertar el nuevo log
+    result = logs_collection.insert_one(log_data.model_dump())
+
+    # Retornar el ID del nuevo log
+    return str(result.inserted_id)
+
+
+def create_log_preRegistro(opcion: str, id_preRegistro: str, numeroDocumento_estudiante: str = None, dic_preRegistro=None):
+    # Crear una instancia del modelo log_preRegistro
+    log_entry = log_preRegistro(
+        opcion=opcion,
+        id_preRegistro=id_preRegistro,
+        numeroDocumento_estudiante=numeroDocumento_estudiante,
+        dic_preRegistro=dic_preRegistro  # Solo si el modelo lo permite
+    )
+
+    # Agregar el log a la base de datos
+    log_id = add_log_preRegistro(log_entry)
+
+    return log_id

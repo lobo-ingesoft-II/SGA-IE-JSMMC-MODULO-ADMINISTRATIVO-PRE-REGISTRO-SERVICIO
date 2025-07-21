@@ -101,7 +101,7 @@ def createDic_usuario_rol_acudiente(id_prematricula):
     else:
         return None
 
-def createDic_estudiante(id_prematricula, idAcudiente, idSede):
+def createDic_estudiante(id_prematricula, idAcudiente, idSede , idCurso=None):
 
     # primero traer la prematricula 
     document = byId_get_preMatricula(id_prematricula)
@@ -117,7 +117,7 @@ def createDic_estudiante(id_prematricula, idAcudiente, idSede):
         email = f"{document_dict['numeroDocumento']}@estudiante.com"
         bird_date = document_dict["fechaNacimiento"]
         id_acudiente = idAcudiente
-        id_curso = None
+        id_curso = idCurso
         id_sede = idSede
         estado_matricula = "matriculado"
 
