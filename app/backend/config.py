@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     # Request 
     url_api_sga_estudiante: str = Field(..., alias="SERVIDOR_API_ESTUDIANTE_URL")
     url_api_sga_preRegistro: str = Field(..., alias="SERVIDOR_API_PRE_REGISTRO_URL")
+    url_api_sga_autenticacion: str = Field(..., alias="SERVIDOR_API_AUTENTICACION_URL")
+    url_api_sga_sedes: str = Field(..., alias="SERVIDOR_API_SEDES_URL")
+
 
     class Config:
         env_file = ".env"

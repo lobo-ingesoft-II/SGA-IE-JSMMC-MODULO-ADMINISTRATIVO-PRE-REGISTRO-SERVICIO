@@ -1,10 +1,9 @@
 # Request para obtener la pre-matricula del SERVICIO-PRE-REGISTRO 
-
 import requests # Para hacer solicitudes HTTP 
 from app.backend.config import settings
 
 # Función para obtener la lista de estudiantes en pre-registro desde el SERVICIO DE PRE-REGISTRO
-def getPrematriculas():
+def get_preMatriculas():
     try:
         # Construir la URL del endpoint del servicio de pre-registro
         url = f"{settings.url_api_sga_preRegistro}/pre_registration"
@@ -24,7 +23,7 @@ def getPrematriculas():
         return None
 
 # Funcion borrar prematricula 
-def deletePrematricula(id:str):
+def delete_preMatricula(id:str):
     try:
         # Construir la URL del endpoint del servicio de pre-registro
         url = f"{settings.url_api_sga_preRegistro}/pre_registration/{id}"
@@ -46,7 +45,7 @@ def deletePrematricula(id:str):
 
 
 # Obtener el id de prematricula por Documento_identidad_estudiante     
-def byStudentNumberDocument_getId_Prematricula(studentNumberDocument:str):
+def byStudent_document_getId_preMatricula(studentNumberDocument:str):
     try:
         # Construir la URL del endpoint del servicio de pre-registro
         url = f"{settings.url_api_sga_preRegistro}/pre_registration/getId/{studentNumberDocument}"
@@ -66,15 +65,18 @@ def byStudentNumberDocument_getId_Prematricula(studentNumberDocument:str):
         return None
     
 # obtener la prematricula por numero de estudiante 
-def byStudentNumber_getPrematricula(studentNumberDocument:str):
+def byStudent_document_get_preMatricula(studentNumberDocument:str):
     try:
 
-        id_prematricula = byStudentNumberDocument_getId_Prematricula(studentNumberDocument)
+        id_prematricula = byStudent_document_getId_preMatricula(studentNumberDocument)
+        
 
         if id_prematricula is not None: 
+            id = id_prematricula.get("id_")
+            print(id)
 
             # Construir la URL del endpoint del servicio de pre-registro
-            url = f"{settings.url_api_sga_preRegistro}/pre_registration/{id_prematricula}"
+            url = f"{settings.url_api_sga_preRegistro}/pre_registration/{id}"
 
             # Realizar la solicitud GET al servicio
             response = requests.get(url)
@@ -95,7 +97,7 @@ def byStudentNumber_getPrematricula(studentNumberDocument:str):
 
    
 # obtener la prematricula por id_prematricula 
-def byId_getPrematricula(id:str):
+def byId_get_preMatricula(id:str):
     try:
 
         # Construir la URL del endpoint del servicio de pre-registro
@@ -106,6 +108,7 @@ def byId_getPrematricula(id:str):
 
         # Verificar si la solicitud fue exitosa
         if response.status_code == 200:
+            # print(response.json())
             return response.json()
         else:
             print(f"Error al obtener prematricula con ID {id}. Código: {response.status_code}")

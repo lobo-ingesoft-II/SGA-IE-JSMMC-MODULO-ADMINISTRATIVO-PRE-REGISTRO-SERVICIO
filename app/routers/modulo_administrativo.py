@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request # para crear rutas en FastAPI modulares
 from fastapi import HTTPException # para manejar excepciones HTTP
 from bson import ObjectId # para manejar ObjectId de MongoDB
 
-from app.schemas.log_preRegistro import log_preRegistro # Importar el modelo de datos para validación
+from app.schemas.log_preRegistro_schema import log_preRegistro # Importar el modelo de datos para validación
 
 # Librerias para Observabilidad
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
@@ -12,7 +12,13 @@ from prometheus_client import CollectorRegistry, generate_latest
 
 # imporar las consultas 
 from app.services.queryMongo import get_logs_preRegsitro
-from app.services.requests_preRegistro import getPrematriculas, deletePrematricula
+from app.services.requests_preRegistro import get_preMatriculas, delete_preMatricula
+
+from app.services.creation_dataDic import createDic_acudiente, createDic_estudiante, createDic_usuario_rol_acudiente
+from app.services.requests_auth import create_usuario, by_document_get_acudiente, delete_usuario
+from app.services.request_sedes import byName_sede_get_sede
+from app.services.requests_preRegistro import byId_get_preMatricula, byStudent_document_get_preMatricula
+from app.services.requests_estudiante import create_estudiante
 
 router = APIRouter() 
 
@@ -57,7 +63,7 @@ def logs_preRegsitro():
 # Ruta para mostrar todos los preRegistro en el momento 
 @router.get("/pre_registros", response_model=dict)
 def get_pre_registros():
-    response = getPrematriculas()
+    response = get_preMatriculas()
     if response is not None:
         return response
     else:
@@ -66,7 +72,7 @@ def get_pre_registros():
 # Ruta para el rechazo de solicitud de prematricula de un estudiante 
 @router.post("/prematricula/rechazar/{id}", response_model=dict)
 def rechazar_prematricula(id:str):
-    response = deletePrematricula(id)
+    response = delete_preMatricula(id)
     if response is not None:
         return response
     else:
@@ -74,13 +80,99 @@ def rechazar_prematricula(id:str):
     
 
 # Ruta para la aceptacion de solicitud de prematricula de un estudiante 
-@router.post("/prematricula/aceptar/{id}/{id_sede}/{id_curso}", response_model=dict)
-def aceptar_prematricula(id:str, id_sede:int, id_curso:int):
+@router.post("/prematricula/aceptar/{id_preRegistro}/{id_curso}", response_model=dict)
+def aceptar_prematricula(id_preRegistro:str,id_curso:int):
+
+    try:
+        # Primero se debe de crear el diccionario del usuario
+        dic_usuario = createDic_usuario_rol_acudiente(id_preRegistro)
+        dic_acudiente  = createDic_acudiente(id_preRegistro)
+ 
+        
+        # Verificar diccionario del usuario
+        if dic_usuario is None:
+            raise HTTPException(status_code=500, detail="Error al crear el diccionario del usuario - Pre Registro no encontrado")
+        if dic_acudiente is None:
+            raise HTTPException(status_code=500, detail="Error al crear el diccionario del acudiente - Pre Registro no encontrado")
+
+        # Agregar el diccionario del acudiente al diccionario del usuario
+        dic_usuario["datos_adicionales"] = dic_acudiente
+
+        # Crear el usuario en la base de datos
+        dic_usuario_acudiente = create_usuario(dic_usuario)
+        if dic_usuario_acudiente is None:
+            raise HTTPException(status_code=500, detail="Error al crear el usuario y acudiente en la base de datos")
+        
+        print("USUARIO CREADO")
+        id_usuario = dic_usuario_acudiente["id_usuario"]
+
+        # Ese metodo Crea de una vez el acudiente !!
+
+        # Ahora se crea el diccionario del estudiante 
+            # buscar Id del acudiente y sede 
+        document = byId_get_preMatricula(id_preRegistro)
+        if document is None:
+            delete_usuario(id_usuario)  # borrar el usuario creado si no se encuentra la prematricula
+            raise HTTPException(status_code=404, detail="Prematricula no encontrada buscando id acudiente y sede")
+            
+
+
+        document = document["documento"] # Obtener el dic de prematricula
+
+        acudiente = by_document_get_acudiente(document["acudiente1CC"])
+        if acudiente is None:
+            delete_usuario(id_usuario)  # borrar el usuario creado si no se encuentra la prematricula
+            raise HTTPException(status_code=404, detail="Acudiente no encontrado")
+        
+        id_acudiente = acudiente["id_acudiente"] 
+
+        # Trear el id de la sede 
+        sede = byName_sede_get_sede(document["sede"])
+        if sede is None:
+            delete_usuario(id_usuario)  # borrar el usuario creado si no se encuentra la prematricula
+            raise HTTPException(status_code=404, detail="Sede no encontrada")
+        
+        id_sede = sede["id_sede"] 
+
+        # print("id_sede: ", id_sede)
+
+        dic_estudiante = createDic_estudiante(id_preRegistro, id_acudiente, id_sede)
+
+        if dic_estudiante is None:
+            delete_usuario(id_usuario)  # borrar el usuario creado si no se encuentra la prematricula
+            raise HTTPException(status_code=500, detail="Error al crear el diccionario del estudiante")
+        
+        # Crear el estudiante en la base de datos
+        estudiante = create_estudiante(dic_estudiante)
+
+        if estudiante is None:
+            delete_usuario(id_usuario)  # borrar el usuario creado si no se encuentra la prematricula
+            raise HTTPException(status_code=500, detail="Error al crear el estudiante en la base de datos")
+        
+        else:
+            # Ahora se debe de borrar la prematricula
+            response = delete_preMatricula(id_preRegistro)
+            if response is None:
+                raise HTTPException(status_code=500, detail=f"Error al borrar pre-registro con id: {id} ")
+            # Por ultimo message de exito
+            return {"message": "Prematricula aceptada y estudiante creado exitosamente", "estudiante": estudiante}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al crear el usuario: {str(e)}")
+
 
     
-    response = deletePrematricula(id)
-    if response is not None:
-        return response
-    else:
-        raise HTTPException(status_code=500, detail=f"Error al borrar pre-registro con id: {id} ")
+# Ruta para buscar prematriculas por numero de documento del estudiante 
+@router.get("/prematricula/buscar/{numero_documento}", response_model=dict)
+def buscar_prematricula(numero_documento: str):
+    try:
+        # Buscar la prematricula por numero de documento
+        document = byStudent_document_get_preMatricula(numero_documento)
+        
+        if document is not None:
+            return document  # Retorna el diccionario con los datos de la prematricula
+        else:
+            raise HTTPException(status_code=404, detail="Prematricula no encontrada")
     
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al buscar prematricula: {str(e)}")
