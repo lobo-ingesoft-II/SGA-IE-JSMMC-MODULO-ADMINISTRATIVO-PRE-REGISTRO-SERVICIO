@@ -7,7 +7,12 @@ from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_
 import time
 from starlette.responses import Response
 # from app.routers.pre_registration_route import REQUEST_COUNT_PRE_REGISTRATION_ROUTERS, REQUEST_LATENCY_PRE_REGISTRATION_ROUTERS, ERROR_COUNT_PRE_REGISTRATION_ROUTERS
-
+# Importa los contadores y el histograma definidos en tu router
+from app.routers.modulo_administrativo import (
+    REQUEST_COUNT_PRE_REGISTRATION_ROUTERS,
+    REQUEST_LATENCY_PRE_REGISTRATION_ROUTERS,
+    ERROR_COUNT_PRE_REGISTRATION_ROUTERS,
+)
 
 # Instancia de FastAPI
 app = FastAPI()
@@ -47,11 +52,22 @@ async def metrics_middleware(request: Request, call_next):
 
         # if status >= 400:
         #     ERROR_COUNT_PRE_REGISTRATION_ROUTERS.labels(endpoint=endpoint, method=method, status_code=str(status)).inc()
+     # 1) Contador de peticiones
+        REQUEST_COUNT_PRE_REGISTRATION_ROUTERS.labels(
+            endpoint=endpoint, method=method
+        ).inc()
 
+        # 2) Histograma de latencia
+        REQUEST_LATENCY_PRE_REGISTRATION_ROUTERS.labels(
+            endpoint=endpoint, method=method
+        ).observe(latency)
+
+        # 3) Contador de errores (status >= 400)
+        if status >= 400:
+            ERROR_COUNT_PRE_REGISTRATION_ROUTERS.labels(
+                endpoint=endpoint, method=method, status_code=str(status)
+            ).inc()    
     return response
-
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
