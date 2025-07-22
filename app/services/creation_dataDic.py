@@ -78,9 +78,9 @@ def createDic_usuario_rol_acudiente(id_prematricula):
         tipo_documento = "CC"
         documento_identidad = document_dict["acudiente1CC"]
         cell = document_dict["acudiente1Celular"]
-        # USUARIO numero documento estudiante 
-        email = f"{document_dict["numeroDocumento"]}@acudiente.com"
-        # Contrasena numero de documento acudiente 
+        # USUARIO numero documento estudiante
+        email = f'{document_dict["numeroDocumento"]}@acudiente.com'
+        # Contrasena numero de documento acudiente
         contrasena = documento_identidad
         rol = "acudiente"
 
